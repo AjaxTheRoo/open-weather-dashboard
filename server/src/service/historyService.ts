@@ -1,7 +1,6 @@
-// done
-// TODO: Define a City class with name and id properties
 import fs from 'node:fs/promises';
 import { v4 as uuidv4 } from 'uuid';
+import path from 'node:path';
 
 class City {
   name: string;
@@ -12,55 +11,74 @@ class City {
     this.id = id;
   }
 }
-// TODO: Complete the HistoryService class
+
 class HistoryService {
-  // TODO: Define a read method that reads from the searchHistory.json file
-  private async read() {
-    return await fs.readFile('db/searchHistory.json', {
-      flag: 'a+',
-      encoding: 'utf8',
-    });
-  }
-  // TODO: Define a write method that writes the updated cities array to the searchHistory.json file
-  private async write(cities: City[]) {
-    await fs.writeFile('db/searchHistory.json', JSON.stringify(cities, null, '\t'));
-  }
-  // TODO: Define a getCities method that reads the cities from the searchHistory.json file and returns them as an array of City objects
-  async getCities() {
-    return await this.read().then((cities) => {
-      let parsedCities: City[];
+  private filePath: string;
 
-      try {
-        parsedCities = [].concat(JSON.parse(cities));
-      } catch (err) {
-        parsedCities = [];
-      }
-
-      return parsedCities;
-    });
+  constructor() {
+    this.filePath = path.join(__dirname, 'db', 'searchHistory.json');
   }
-  // TODO Define an addCity method that adds a city to the searchHistory.json file
-  async addCity(city: string) {
+
+  private async ensureDirectoryExists(): Promise<void> {
+    const dir = path.dirname(this.filePath);
+    try {
+      await fs.access(dir);
+    } catch {
+      await fs.mkdir(dir, { recursive: true });
+    }
+  }
+
+  private async read(): Promise<string> {
+    try {
+      return await fs.readFile(this.filePath, { encoding: 'utf8' });
+    } catch (err) {
+      console.error('Error reading file:', err);
+      return '[]'; // Return an empty array if the file doesn't exist or can't be read
+    }
+  }
+
+  private async write(cities: City[]): Promise<void> {
+    await fs.writeFile(this.filePath, JSON.stringify(cities, null, '\t'));
+  }
+
+  async getCities(): Promise<City[]> {
+    const cities = await this.read();
+    let parsedCities: City[];
+
+    try {
+      parsedCities = JSON.parse(cities) || [];
+    } catch (err) {
+      console.error('Error parsing cities:', err);
+      parsedCities = [];
+    }
+
+    return parsedCities;
+  }
+
+  async addCity(city: string): Promise<City> {
     if (!city) {
       throw new Error('City cannot be blank');
     }
-    const newCity: City = { name: city, id: uuidv4() };
-    return await this.getCities()
-      .then((cities) => {
-        if (cities.find((index) => index.name === city)) {
-          return cities;
-        }
-        return [...cities, newCity];
-      })
-      .then((updatedCities) => this.write(updatedCities))
-      .then(() => newCity);
+
+    await this.ensureDirectoryExists(); // Ensure the directory exists
+
+    const newCity: City = new City(city, uuidv4());
+    const cities = await this.getCities();
+
+    // Check for duplicates in a case-insensitive manner
+    if (cities.find((index) => index.name.toLowerCase() === city.toLowerCase())) {
+      return cities.find((index) => index.name.toLowerCase() === city.toLowerCase())!; // Return the existing city if it is already in the list
+    }
+
+    const updatedCities = [...cities, newCity];
+    await this.write(updatedCities);
+    return newCity;
   }
-  
-  // * BONUS TODO: Define a removeCity method that removes a city from the searchHistory.json file
-async removeCity(id: string) {
-  return await this.getCities()
-    .then((cities) => cities.filter((city) => city.id !== id))
-    .then((filteredCities) => this.write(filteredCities));
+
+  async removeCity(id: string): Promise<void> {
+    const cities = await this.getCities();
+    const filteredCities = cities.filter((city) => city.id !== id);
+    await this.write(filteredCities);
   }
 }
 
