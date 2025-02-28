@@ -61,6 +61,6 @@ This project is licensed under the MIT License. See the full license details [he
 ## Questions  
 For any questions or feedback, feel free to reach out:  
 
-- **GitHub**: [AjaxTheRoo](https://github.com/isaiahg46)  
+- **GitHub**: [AjaxTheRoo](https://github.com/AjaxTheRoo)  
 - **Email**: [rivetwolf@gmail.com](mailto:rivetwolf@gmail.com)  
 
