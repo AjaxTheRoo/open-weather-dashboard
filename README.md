@@ -18,7 +18,7 @@ To install and set up the application locally, follow these steps:
 
 1. Clone the repository to your local machine:  
    ```bash
-   git clone https://github.com/isaiahg46/weather-dashboard.git
+   git clone https://github.com/AjaxTheRoo/open-weather-dashboard.git
    ```  
 2. Navigate into the project directory:  
    ```bash
